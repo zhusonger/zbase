@@ -39,10 +39,10 @@ publish {
     groupId = rootProject.ext.groupId
     bintrayUser = rootProject.ext.bintrayUser
     bintrayKey = rootProject.ext.bintrayKey
-    website = rootProject.ext.website
     dryRun false
     override true
     artifactId = 'base'
     publishVersion = '0.0.1'
     desc = 'AndroidZ Base'
+    website = 'https://github.com/zhusonger/androidz_base'
 }
