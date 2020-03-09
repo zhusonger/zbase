@@ -20,7 +20,7 @@ import java.util.Set;
 public class AppManager {
 
     private static class Holder {
-        private static final AppManager INSTANCE = new AppManager();
+       public static final AppManager INSTANCE = new AppManager();
     }
 
     private AppManager(){}

@@ -20,7 +20,7 @@ import cn.com.lasong.base.R;
  * Created by zhusong on 17/5/19.
  */
 
-public class T {
+public class TN {
     private static Toast sToast = null;
 
     public static void show(@StringRes int tipId) {
