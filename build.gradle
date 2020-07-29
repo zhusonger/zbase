@@ -41,7 +41,7 @@ publish {
     dryRun false
     override true
     artifactId = 'base'
-    publishVersion = '0.0.1'
+    publishVersion = '0.0.2'
     desc = 'AndroidZ Base'
     website = 'https://github.com/zhusonger/androidz_base'
 }
