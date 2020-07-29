@@ -1,6 +1,12 @@
 # Base
 基础工具类库
 
+# 引入
+
+```
+implementation 'cn.com.lasong:base:0.0.2'
+```
+
 ## v0.0.1
 * 添加日志ILog/弹窗TN便捷工具类
 * 解压Zip文件工具类 **ZLibUtils**
