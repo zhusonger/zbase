@@ -1,5 +1,7 @@
 apply plugin: 'com.android.library'
 apply plugin: 'com.novoda.bintray-release'
+apply plugin: 'cn.com.lasong.time'
+apply plugin: 'cn.com.lasong.inject'
 
 android {
     compileSdkVersion rootProject.ext.compileSdkVersion
