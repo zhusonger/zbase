@@ -17,3 +17,4 @@ implementation 'cn.com.lasong:base:latest.release'
 ## v0.0.2
 * 添加文件Uri解析绝对路径工具
 * BaseActivity添加权限申请方法
+* 添加Buffer缓冲任务, 针对连续事件只处理最后的事件
