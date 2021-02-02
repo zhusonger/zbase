@@ -2,8 +2,9 @@ package cn.com.lasong.base;
 
 import android.os.Bundle;
 
+import androidx.activity.result.ActivityResultRegistry;
 import androidx.annotation.Nullable;
-import androidx.appcompat.app.AppCompatActivity;
+import androidx.fragment.app.Fragment;
 
 import cn.com.lasong.base.result.PERCallback;
 import cn.com.lasong.base.result.PERLifecycleObserver;
@@ -11,20 +12,18 @@ import cn.com.lasong.base.result.PERLifecycleObserver;
 /**
  * Author: zhusong
  * Email: song.zhu@lasong.com.cn
- * Date: 2020-03-04
- * Description: activity基类
+ * Date: 2021/2/2
+ * Description: 基类Fragment
  */
-public class BaseActivity extends AppCompatActivity {
+public class BaseFragment extends Fragment {
 
     private PERLifecycleObserver mPERObserver;
-
     @Override
-    protected void onCreate(@Nullable Bundle savedInstanceState) {
+    public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        mPERObserver = new PERLifecycleObserver(getActivityResultRegistry());
+        mPERObserver = new PERLifecycleObserver(requireActivity().getActivityResultRegistry());
         getLifecycle().addObserver(mPERObserver);
     }
-
     /**
      * 权限请求
      * @param callback
