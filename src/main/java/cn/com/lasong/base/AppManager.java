@@ -4,12 +4,10 @@ import android.app.Activity;
 
 import androidx.annotation.NonNull;
 
-import java.lang.ref.WeakReference;
-import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.Collections;
+import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.ListIterator;
 
 /**
  * Author: zhusong
@@ -29,19 +27,10 @@ public class AppManager {
         return Holder.INSTANCE;
     }
 
-    private Map<String, List<WeakReference<Activity>>> mLifeActivities = new HashMap<>();
-    // 一般情况 mCurrent 跟 mCurrentVisible 相同, 但是在启动新Activity, 可能出现mCurrent是正准备展示的Activity
-    // 当前显示activity
-    private WeakReference<Activity> mCurrent;
+    private List<Activity> mActivities = Collections.synchronizedList(new LinkedList<>());
+
     public void onCreate(@NonNull Activity activity) {
-        String name = activity.getClass().getName();
-        List<WeakReference<Activity>> list = mLifeActivities.get(name);
-        if (null == list) {
-            list = new ArrayList<>();
-            mLifeActivities.put(name, list);
-        }
-        list.add(new WeakReference<Activity>(activity));
-        mCurrent = new WeakReference<>(activity);
+        mActivities.add(activity);
     }
 
     public void onStart(@NonNull Activity activity) {
@@ -52,91 +41,64 @@ public class AppManager {
 
     public void onPause(@NonNull Activity activity) {
     }
+
     public void onStop(Activity activity) {
     }
 
     public void onDestroy(@NonNull Activity activity) {
-        String name = activity.getClass().getName();
-        List<WeakReference<Activity>> list = mLifeActivities.get(name);
-        if (null == list) {
-            return;
-        }
-        WeakReference<Activity> removeRef = null;
-        for (WeakReference<Activity> ref : list) {
-            Activity value = ref.get();
-            if (value == activity) {
-                removeRef = ref;
-                break;
-            }
-        }
-        if (null != removeRef) {
-            list.remove(removeRef);
-        }
+        mActivities.remove(activity);
     }
 
+    /**
+     * 获取当前的activity
+     * @return
+     */
     public Activity current() {
-        if (null == mCurrent || mCurrent.get() == null) {
+        if (mActivities.isEmpty()) {
             return null;
         }
-        return mCurrent.get();
+        return mActivities.get(mActivities.size() - 1);
+
     }
 
-    public Activity getActivity(@NonNull String key){
-        List<WeakReference<Activity>> list = mLifeActivities.get(key);
-        if (null == list || list.isEmpty()) {
+    /**
+     * 获取最后一个指定类的activity
+     * @param clz
+     * @param <A>
+     * @return
+     */
+    public <A extends Activity> A getLastActivity(@NonNull Class<A> clz){
+        if (mActivities.isEmpty()) {
             return null;
         }
-        for(WeakReference<Activity> weakActivity :list){
-            Activity activity = weakActivity.get();
-            if(activity == null){
-                continue;
-            }
-            if(activity.getClass().getName().equals(key)){
-                return activity;
+
+        ListIterator<Activity> iterator = mActivities.listIterator(mActivities.size());
+        while (iterator.hasPrevious()) {
+            Activity activity = iterator.previous();
+            if (clz.isInstance(activity)) {
+                return (A) activity;
             }
         }
         return null;
     }
 
-    public void finishRecent(@NonNull String key) {
-        List<WeakReference<Activity>> list = mLifeActivities.get(key);
-        if (null == list || list.isEmpty()) {
+    /**
+     * 移除最后一个指定类的activity
+     * @param clz
+     * @param <A>
+     */
+    public <A extends Activity> void finishLastActivity(@NonNull Class<A> clz) {
+        if (mActivities.isEmpty()) {
             return;
         }
-        WeakReference<Activity> last = list.get(list.size() - 1);
-        Activity activity = last.get();
-        if (null == activity) {
-            return;
-        }
-        activity.finish();
-    }
 
-    public void finishAll(@NonNull String key) {
-        List<WeakReference<Activity>> list = mLifeActivities.get(key);
-        if (null == list || list.isEmpty()) {
-            return;
-        }
-        for (WeakReference<Activity> ref : list) {
-            Activity activity = ref.get();
-            if (activity == null) {
-                continue;
+        ListIterator<Activity> iterator = mActivities.listIterator(mActivities.size());
+        while (iterator.hasPrevious()) {
+            Activity activity = iterator.previous();
+            if (clz.isInstance(activity)) {
+                activity.finish();
+                break;
             }
-            activity.finish();
-        }
-        list.clear();
-    }
-
-    public void finishCurrent() {
-        if (null != mCurrent && mCurrent.get() != null) {
-            Activity activity = mCurrent.get();
-            activity.finish();
-        }
-    }
-
-    public void exit() {
-        Set<String> keys = mLifeActivities.keySet();
-        for (String key : keys) {
-            finishAll(key);
         }
     }
 }
