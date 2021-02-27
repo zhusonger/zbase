@@ -22,3 +22,6 @@ implementation 'cn.com.lasong:base:latest.release'
 ## v0.0.3
 * 使用androidx.activity实现权限申请
 * 调整AppManager
+
+    ### v0.0.3.1
+    * 修复LifecycleObserver需求Android7.0的问题

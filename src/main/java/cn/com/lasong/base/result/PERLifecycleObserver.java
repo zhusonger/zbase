@@ -6,10 +6,10 @@ import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.ActivityResultRegistry;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
-import androidx.lifecycle.DefaultLifecycleObserver;
+import androidx.lifecycle.Lifecycle;
+import androidx.lifecycle.LifecycleEventObserver;
 import androidx.lifecycle.LifecycleOwner;
 
-import java.security.MessageDigest;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -18,8 +18,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Queue;
-import java.util.Set;
-import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import cn.com.lasong.utils.SecretUtils;
@@ -30,7 +28,7 @@ import cn.com.lasong.utils.SecretUtils;
  * Date: 2021/2/1
  * Description: 由Activity管理的生命周期监听类
  */
-public class PERLifecycleObserver implements DefaultLifecycleObserver {
+public class PERLifecycleObserver implements LifecycleEventObserver {
 
     private final AtomicInteger mNextLocalRequestCode = new AtomicInteger();
     private final ActivityResultRegistry mRegistry;
@@ -45,7 +43,6 @@ public class PERLifecycleObserver implements DefaultLifecycleObserver {
     }
 
 
-    @Override
     public void onCreate(@NonNull LifecycleOwner owner) {
         mLauncher = mRegistry.register(
                 "permission_observer_rq#" + mNextLocalRequestCode.getAndIncrement(),
@@ -76,7 +73,6 @@ public class PERLifecycleObserver implements DefaultLifecycleObserver {
                 });
     }
 
-    @Override
     public void onDestroy(@NonNull LifecycleOwner owner) {
         mCallbacks.clear();
     }
@@ -106,5 +102,17 @@ public class PERLifecycleObserver implements DefaultLifecycleObserver {
         }
         mLauncher.launch(permissions);
 
+    }
+
+    @Override
+    public void onStateChanged(@NonNull LifecycleOwner owner, @NonNull Lifecycle.Event event) {
+        switch (event) {
+            case ON_CREATE:
+                onCreate(owner);
+                break;
+            case ON_DESTROY:
+                onDestroy(owner);
+                break;
+        }
     }
 }
