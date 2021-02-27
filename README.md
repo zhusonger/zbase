@@ -18,3 +18,7 @@ implementation 'cn.com.lasong:base:latest.release'
 * 添加文件Uri解析绝对路径工具
 * BaseActivity添加权限申请方法
 * 添加Buffer缓冲任务, 针对连续事件只处理最后的事件
+
+## v0.0.3
+* 使用androidx.activity实现权限申请
+* 调整AppManager
