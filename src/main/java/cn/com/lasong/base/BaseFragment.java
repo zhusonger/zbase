@@ -7,6 +7,7 @@ import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 
 import cn.com.lasong.base.result.PERCallback;
+import cn.com.lasong.base.result.PERCaller;
 import cn.com.lasong.base.result.PERLifecycleObserver;
 
 /**
@@ -15,7 +16,7 @@ import cn.com.lasong.base.result.PERLifecycleObserver;
  * Date: 2021/2/2
  * Description: 基类Fragment
  */
-public class BaseFragment extends Fragment {
+public class BaseFragment extends Fragment implements PERCaller {
 
     private PERLifecycleObserver mPERObserver;
     @Override
@@ -29,6 +30,7 @@ public class BaseFragment extends Fragment {
      * @param callback
      * @param permissions
      */
+    @Override
     public void requestPermissions(PERCallback callback, String... permissions) {
         mPERObserver.requestPermissions(callback, permissions);
     }

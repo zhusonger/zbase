@@ -25,3 +25,6 @@ implementation 'cn.com.lasong:base:latest.release'
 
     ### v0.0.3.1
     * 修复LifecycleObserver需求Android7.0的问题
+
+    ### v0.0.3.2
+    * 添加PERCaller接口, 用来在泛型工具类中统一处理权限请求
