@@ -28,3 +28,7 @@ implementation 'cn.com.lasong:base:latest.release'
 
     ### v0.0.3.2
     * 添加PERCaller接口, 用来在泛型工具类中统一处理权限请求
+
+    ### v0.0.3.3
+    * 修复key相同导致权限请求回调失败的情况
+    * 更新androidx 的 fragment & activity版本

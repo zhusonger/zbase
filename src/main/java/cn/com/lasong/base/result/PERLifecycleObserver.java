@@ -20,6 +20,7 @@ import java.util.Map;
 import java.util.Queue;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import cn.com.lasong.utils.ILog;
 import cn.com.lasong.utils.SecretUtils;
 
 /**
@@ -36,7 +37,7 @@ public class PERLifecycleObserver implements LifecycleEventObserver {
     // 处理权限请求
     private Map<String, Queue<PERCallback>> mCallbacks = new HashMap<>();
     private ActivityResultLauncher<String[]> mLauncher;
-    private String TAG = "PermissionLifecycleObserver";
+    private String TAG = "PERLifecycleObserver";
 
     public PERLifecycleObserver(@NonNull ActivityResultRegistry registry) {
         this.mRegistry = registry;
@@ -45,7 +46,7 @@ public class PERLifecycleObserver implements LifecycleEventObserver {
 
     public void onCreate(@NonNull LifecycleOwner owner) {
         mLauncher = mRegistry.register(
-                "permission_observer_rq#" + mNextLocalRequestCode.getAndIncrement(),
+                "fragment_rq_"+owner.getClass().getSimpleName()+"#" + mNextLocalRequestCode.getAndIncrement(),
                 owner, new ActivityResultContracts.RequestMultiplePermissions(),
                 result -> {
                     List<String> keys = new ArrayList<>(result.keySet());
