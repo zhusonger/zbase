@@ -1,5 +1,6 @@
 package cn.com.lasong.utils;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.os.Looper;
 import android.text.TextUtils;
@@ -22,7 +23,14 @@ import cn.com.lasong.base.R;
 
 public class TN {
     private static Toast sToast = null;
+    private static int sTextSize = 14;
 
+    public static void setTextSize(int textSize) {
+        if (textSize <= 0) {
+            return;
+        }
+        sTextSize = textSize;
+    }
     public static void show(@StringRes int tipId) {
         Context context = AppManager.getInstance().current();
         if (null == context) {
@@ -35,6 +43,7 @@ public class TN {
         show(tip, false, false);
     }
 
+    @SuppressLint("ShowToast")
     public static void show(String tip, boolean checked, boolean enable) {
         if (Looper.myLooper() != Looper.getMainLooper()) {
             ILog.e("T", "T is not show on MainThread");
@@ -51,7 +60,7 @@ public class TN {
             sToast = Toast.makeText(context, tip, Toast.LENGTH_SHORT);
             View customView = LayoutInflater.from(context).inflate(R.layout.view_t_default, null);
             TextView toast_custom_tv = customView.findViewById(R.id.toast_custom_tv);
-            toast_custom_tv.setTextSize(TypedValue.COMPLEX_UNIT_SP, 14);
+            toast_custom_tv.setTextSize(TypedValue.COMPLEX_UNIT_SP, sTextSize);
             sToast.setView(customView);
             sToast.setGravity(Gravity.BOTTOM, 0, DeviceUtils.dp2px(240));
         }
@@ -73,7 +82,7 @@ public class TN {
         Toast toast = Toast.makeText(context, tip, Toast.LENGTH_SHORT);
         View customView = LayoutInflater.from(context).inflate(R.layout.view_t_default, null);
         TextView toast_custom_tv = customView.findViewById(R.id.toast_custom_tv);
-        toast_custom_tv.setTextSize(TypedValue.COMPLEX_UNIT_SP, 14);
+        toast_custom_tv.setTextSize(TypedValue.COMPLEX_UNIT_SP, sTextSize);
         toast.setView(customView);
         toast.setGravity(Gravity.BOTTOM, 0, DeviceUtils.dp2px(240));
         toast.show();
