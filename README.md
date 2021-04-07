@@ -1,52 +1,34 @@
-# AndroidZ
-AndroidZ开源项目
+# Base
+基础工具类库
 
-## Base
-
-基础库
-
-https://github.com/zhusonger/androidz_base
+# 引入
 
 ```
-implementation 'cn.com.lasong:base:latest.release'
+implementation 'com.github.zhusonger.androidz:base:master'
 ```
 
-## Widget
+## v0.0.1
+* 添加日志ILog/弹窗TN便捷工具类
+* 解压Zip文件工具类 **ZLibUtils**
+* 设备分辨率转换类 **DeviceUtils**
+* Activity&Application基类
+* 应用管理类 **记录** Activity生命周期
 
-控件库
+## v0.0.2
+* 添加文件Uri解析绝对路径工具
+* BaseActivity添加权限申请方法
+* 添加Buffer缓冲任务, 针对连续事件只处理最后的事件
 
-https://github.com/zhusonger/androidz_widget
+## v0.0.3
+* 使用androidx.activity实现权限申请
+* 调整AppManager
 
-```
-implementation 'cn.com.lasong:widget:latest.release'
-```
+    ### v0.0.3.1
+    * 修复LifecycleObserver需求Android7.0的问题
 
-## Media
+    ### v0.0.3.2
+    * 添加PERCaller接口, 用来在泛型工具类中统一处理权限请求
 
-媒体库
-
-https://github.com/zhusonger/androidz_media
-
-```
-implementation 'cn.com.lasong:media:latest.release'
-```
-
-## Plugin
-
-插件库
-
-https://github.com/zhusonger/androidz_plugin
-
-
-```
-// 根目录build.gradle
-buildscript {
-    dependencies {
-        // 1.添加classpath
-        classpath "cn.com.lasong:plugin:0.0.1"
-    }
-}
-
-// module的build.gradle
-apply plugin: 'cn.com.lasong.inject'
-```
+    ### v0.0.3.3
+    * 修复key相同导致权限请求回调失败的情况
+    * 更新androidx 的 fragment & activity版本
