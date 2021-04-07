@@ -1,5 +1,6 @@
 apply plugin: 'com.android.library'
-apply plugin: 'com.novoda.bintray-release'
+apply plugin: 'com.github.dcendents.android-maven'
+
 
 android {
     compileSdkVersion rootProject.ext.compileSdkVersion
@@ -22,6 +23,10 @@ android {
         }
     }
 
+    lintOptions {
+        abortOnError false
+    }
+
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_1_8
         targetCompatibility JavaVersion.VERSION_1_8
@@ -33,22 +38,22 @@ dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
 
     implementation 'androidx.appcompat:appcompat:1.2.0'
-    implementation "androidx.fragment:fragment:1.3.0"
-    implementation "androidx.activity:activity:1.3.0-alpha03"
+    implementation "androidx.fragment:fragment:1.3.0-rc02"
+    implementation "androidx.activity:activity:1.2.0-rc01"
     testImplementation 'junit:junit:4.12'
     androidTestImplementation 'androidx.test.ext:junit:1.1.1'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.2.0'
 }
 
-publish {
-    userOrg = rootProject.ext.bintrayUser
-    groupId = rootProject.ext.groupId
-    bintrayUser = rootProject.ext.bintrayUser
-    bintrayKey = rootProject.ext.bintrayKey
-    dryRun false
-    override true
-    artifactId = 'base'
-    publishVersion = '0.0.3.5'
-    desc = 'AndroidZ Base'
-    website = 'https://github.com/zhusonger/androidz_base'
-}
+//publish {
+//    userOrg = rootProject.ext.bintrayUser
+//    groupId = rootProject.ext.groupId
+//    bintrayUser = rootProject.ext.bintrayUser
+//    bintrayKey = rootProject.ext.bintrayKey
+//    dryRun false
+//    override true
+//    artifactId = 'base'
+//    publishVersion = '0.0.3.2'
+//    desc = 'AndroidZ Base'
+//    website = 'https://github.com/zhusonger/androidz_base'
+//}
