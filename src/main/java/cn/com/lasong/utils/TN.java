@@ -89,6 +89,8 @@ public class TN {
             toast_custom_tv.setTextSize(TypedValue.COMPLEX_UNIT_SP, sTextSize);
             sToast.setView(customView);
             sToast.setGravity(Gravity.BOTTOM|Gravity.FILL_HORIZONTAL, 0, DeviceUtils.dp2px(240));
+        } else {
+            sToast.setDuration(Toast.LENGTH_SHORT);
         }
         View customView = sToast.getView();
         if (null != customView) {
