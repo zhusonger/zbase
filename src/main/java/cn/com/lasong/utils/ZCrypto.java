@@ -9,6 +9,8 @@ package cn.com.lasong.utils;
  */
 public class ZCrypto {
     static {
+        System.loadLibrary("ssl");
+        System.loadLibrary("crypto");
         System.loadLibrary("zcrypto");
     }
     public static native void validateClientKey(String clientKey);

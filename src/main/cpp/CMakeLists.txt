@@ -8,6 +8,34 @@ cmake_minimum_required(VERSION 3.4.1)
 set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -s")
 set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -s")
 
+set(LIBS_DIR ${CMAKE_SOURCE_DIR}/../libs)
+# 引入头文件
+include_directories(${LIBS_DIR}/include)
+
+
+add_library(avutil
+        SHARED
+        IMPORTED )
+set_target_properties(
+        avutil
+        PROPERTIES IMPORTED_LOCATION ${JNI_LIBS_DIR}/${ANDROID_ABI}/libavutil.so)
+
+add_library(crypto
+        SHARED
+        IMPORTED)
+set_target_properties(
+        crypto
+        PROPERTIES IMPORTED_LOCATION ${LIBS_DIR}/${ANDROID_ABI}/libcrypto.so
+)
+
+add_library(ssl
+        SHARED
+        IMPORTED)
+set_target_properties(
+        ssl
+        PROPERTIES IMPORTED_LOCATION ${LIBS_DIR}/${ANDROID_ABI}/libssl.so
+)
+
 add_library( # 设置库的名称
         zcrypto
         # 将库设置为共享库。
@@ -26,5 +54,6 @@ find_library( # 设置path变量的名称
 # 指定库CMake应该链接到目标库中，可以链接多个库，比如定义库，构建脚本，预先构建的第三方库或者系统库
 target_link_libraries( # 指定目标库
         zcrypto
+        crypto ssl
         # 目标库到日志库的链接 包含在NDK
         ${log-lib})
