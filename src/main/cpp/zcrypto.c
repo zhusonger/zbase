@@ -24,67 +24,121 @@
 
 #endif //ANDROIDZ_HELPER_H
 
-const int noise_words_index = 88;
-const int noise_words_size = 6;
+const size_t noise_word_index = 88;
+const size_t noise_word_size = 6;
+const size_t aes_size = 32;
 
-// 记录服务端返回的加密后的原始公钥信息, 需要返回服务端用来获取对应私钥解密
-char *c_key_b64_origin;
 // 用来加密的实际公钥
-char *c_key;
-
+char *rsa_key = NULL;
+// aes密钥
+char *aes_key = NULL;
+// 签名
+char *signature = NULL;
+// rsa加密key
 RSA *public_key_rsa;
+// rsa长度
 int rsa_len;
-// 设置加密key
-JNIEXPORT void JNICALL Java_cn_com_lasong_utils_ZCrypto_validateClientKey
-        (JNIEnv *env, jclass clz, jstring key) {
-    int len_key = (*env)->GetStringUTFLength(env, key);
-    const char *tmp = (*env)->GetStringUTFChars(env, key, 0);
-    if (c_key) {
-        free(c_key);
-        c_key = NULL;
-    }
-    if (c_key_b64_origin) {
-        free(c_key_b64_origin);
-        c_key_b64_origin = NULL;
-    }
 
+void _release() {
+    rsa_len = 0;
+    if (rsa_key) {
+        free(rsa_key);
+        rsa_key = NULL;
+    }
+    if (aes_key) {
+        free(aes_key);
+        aes_key = NULL;
+    }
+    if (signature) {
+        free(signature);
+        signature = NULL;
+    }
     if (public_key_rsa) {
         RSA_free(public_key_rsa);
         public_key_rsa = NULL;
     }
-    c_key_b64_origin = malloc(len_key * sizeof(char));
-    strcpy(c_key_b64_origin, tmp);
-    (*env)->ReleaseStringUTFChars(env, key, tmp);
-    int key_b64_length = Base64decode_len(c_key_b64_origin);
-    // get noise key
-    char *key_noise = malloc(key_b64_length * sizeof(char));
-    int key_noise_len = Base64decode(key_noise, c_key_b64_origin);
-    // get real key
-    int invalid_len = noise_words_size + 1;
-    int key_real_len = key_noise_len - invalid_len;
-    c_key = malloc(key_real_len * sizeof(char));
-    strncpy(c_key, key_noise, noise_words_index);
-    int real_rlt_start_index = noise_words_index + invalid_len;
-    strncpy(c_key + noise_words_index, key_noise + real_rlt_start_index,
-            key_noise_len - real_rlt_start_index);
-    free(key_noise);
-    key_noise = NULL;
+}
+
+void *malloc_z(size_t size) {
+    void *ptr = malloc(size);
+    if (ptr)
+        memset(ptr, 0, size);
+    return ptr;
+}
+
+// 设置加密key
+JNIEXPORT int JNICALL Java_cn_com_lasong_utils_ZCrypto_validateClientKey
+        (JNIEnv *env, jclass clz, jstring key, jstring sign) {
+
+    _release();
+
+    const char *rsa_aes_origin_b64 = (*env)->GetStringUTFChars(env, key, /*copy*/JNI_FALSE);
+    int len_sign_index = (*env)->GetStringUTFLength(env, sign);
+    signature = malloc_z(len_sign_index * sizeof(char));
+    const char *sign_index_b64 = (*env)->GetStringUTFChars(env, sign, /*copy*/JNI_FALSE);
+    strlcpy(signature, sign_index_b64, len_sign_index);
+    // get aes key
+    aes_key = malloc_z((aes_size + 1) * sizeof(char));
+    strncpy(aes_key, rsa_aes_origin_b64 + aes_size, aes_size);
+    aes_key[aes_size + 1] = '\0';
+    // get noise public key
+    unsigned int len_noise_rsa_b64 = strlen(rsa_aes_origin_b64) - aes_size;
+    char *noise_rsa_b64 = malloc_z(len_noise_rsa_b64 * sizeof(char));
+    strncpy(noise_rsa_b64, rsa_aes_origin_b64, aes_size);
+    strncpy(noise_rsa_b64 + aes_size, rsa_aes_origin_b64 + aes_size * 2,
+            (len_noise_rsa_b64 - aes_size));
+    char *noise_rsa = malloc_z(Base64decode_len(noise_rsa_b64) * sizeof(char));
+    int len_noise_rsa = Base64decode(noise_rsa, noise_rsa_b64);
+    // get real public key
+    rsa_key = malloc_z((len_noise_rsa - noise_word_size) * sizeof(char));
+    strncpy(rsa_key, noise_rsa, noise_word_index);
+    unsigned int real_rlt_start_index = noise_word_index + noise_word_size;
+    strncpy(rsa_key + noise_word_index, noise_rsa + real_rlt_start_index,
+            len_noise_rsa - real_rlt_start_index);
+
     // get crypto public key
-    BIO *public_key_bio = BIO_new_mem_buf(c_key, -1);
+    BIO *public_key_bio = BIO_new_mem_buf(rsa_key, -1);
     public_key_rsa = PEM_read_bio_RSA_PUBKEY(public_key_bio, NULL, NULL, NULL);
-    BIO_free(public_key_bio);
+    BIO_free_all(public_key_bio);
     // get crypto result len
     rsa_len = RSA_size(public_key_rsa);
+
+    // sign
+    char *sign_b64 = malloc_z((len_sign_index - 1) * sizeof(char));
+    strncpy(sign_b64, signature, noise_word_index);
+    unsigned int real_rs_start_index = noise_word_index + 1;
+    strncpy(sign_b64 + noise_word_index, signature + real_rs_start_index,
+            (len_sign_index - real_rs_start_index));
+    char *de_sign = malloc_z(Base64decode_len(sign_b64) * sizeof(char));
+    int len_de_sign = Base64decode(de_sign, sign_b64);
+    //对数据进行sha256算法摘要
+    unsigned char md[SHA256_DIGEST_LENGTH];
+    SHA256((unsigned char *) rsa_aes_origin_b64, strlen(rsa_aes_origin_b64), md);
+    int ret = RSA_verify(NID_sha256, md, SHA256_DIGEST_LENGTH, (const unsigned char *) de_sign,
+                         len_de_sign, public_key_rsa);
+    if (!ret) {
+        _release();
+    }
+    (*env)->ReleaseStringUTFChars(env, key, rsa_aes_origin_b64);
+    (*env)->ReleaseStringUTFChars(env, sign, sign_index_b64);
+    free(noise_rsa_b64);
+    noise_rsa_b64 = NULL;
+    free(noise_rsa);
+    noise_rsa = NULL;
+    free(sign_b64);
+    sign_b64 = NULL;
+    free(de_sign);
+    de_sign = NULL;
+    return ret;
 }
 
 // 加密数据
 JNIEXPORT jstring JNICALL
 Java_cn_com_lasong_utils_ZCrypto_encode(JNIEnv *env, jclass clazz, jstring content) {
     const char *tmp = (*env)->GetStringUTFChars(env, content, 0);
-    LOGE("content : %s\n, key_orgin : %s\n, key : %s\n", tmp, c_key_b64_origin, c_key);
-    char *p_en = malloc(rsa_len * sizeof(unsigned char));
+    char *p_en = malloc_z(rsa_len * sizeof(unsigned char));
     int p_len = RSA_public_encrypt(strlen(tmp), (unsigned char *) tmp, (unsigned char *) p_en,
-                                 public_key_rsa, RSA_PKCS1_PADDING);
+                                   public_key_rsa, RSA_PKCS1_PADDING);
     (*env)->ReleaseStringUTFChars(env, content, tmp);
 
     if (p_len < 0) {
@@ -92,7 +146,7 @@ Java_cn_com_lasong_utils_ZCrypto_encode(JNIEnv *env, jclass clazz, jstring conte
         return NULL;
     }
     int len = Base64encode_len(p_len);
-    char *p_en_b64 = malloc(len * sizeof(char));
+    char *p_en_b64 = malloc_z(len * sizeof(char));
     Base64encode(p_en_b64, p_en, p_len);
     return (*env)->NewStringUTF(env, p_en_b64);
 
@@ -103,15 +157,13 @@ Java_cn_com_lasong_utils_ZCrypto_encode(JNIEnv *env, jclass clazz, jstring conte
 //    BIO *private_key_bio = BIO_new_mem_buf(p_key, -1);
 //
 //
-//    unsigned char *p_dec = malloc(字符长度 * sizeof(unsigned char));
+//    unsigned char *p_dec = malloc_z(字符长度 * sizeof(unsigned char));
 //    RSA *private_key_rsa = PEM_read_bio_RSAPrivateKey(private_key_bio, NULL, NULL, NULL);
 //    返回解码后的字符长度
 //    int len = RSA_private_decrypt(rsa_len, p_en, p_dec, private_key_rsa, RSA_PKCS1_PADDING);
 }
 
-
-// 返回原始key
-JNIEXPORT jstring JNICALL
-Java_cn_com_lasong_utils_ZCrypto_originKey(JNIEnv *env, jclass clazz) {
-    return (*env)->NewStringUTF(env, c_key_b64_origin);
+JNIEXPORT void JNICALL
+Java_cn_com_lasong_utils_ZCrypto_release(JNIEnv *env, jclass clazz) {
+    _release();
 }

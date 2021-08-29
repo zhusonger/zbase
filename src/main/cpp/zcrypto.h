@@ -14,18 +14,30 @@ extern "C" {
 /*
  * Class:     cn_com_lasong_utils_ZCrypto
  * Method:    validateClientKey
- * Signature: (Ljava/lang/String;)V
+ * Signature: (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)I
  */
-JNIEXPORT void JNICALL Java_cn_com_lasong_utils_ZCrypto_validateClientKey
-(JNIEnv *, jclass, jstring);
+JNIEXPORT int JNICALL Java_cn_com_lasong_utils_ZCrypto_validateClientKey
+        (JNIEnv *, jclass, jstring, jstring);
 
-JNIEXPORT jstring JNICALL
-Java_cn_com_lasong_utils_ZCrypto_encode(JNIEnv *, jclass, jstring);
+/*
+ * Class:     cn_com_lasong_utils_ZCrypto
+ * Method:    encode
+ * Signature: (Ljava/lang/String;)Ljava/lang/String;
+ */
+JNIEXPORT jstring JNICALL Java_cn_com_lasong_utils_ZCrypto_encode
+        (JNIEnv *, jclass, jstring);
 
-JNIEXPORT jstring JNICALL
-Java_cn_com_lasong_utils_ZCrypto_originKey(JNIEnv *, jclass);
+/*
+ * Class:     cn_com_lasong_utils_ZCrypto
+ * Method:    release
+ * Signature: ()V
+ */
+JNIEXPORT void JNICALL
+Java_cn_com_lasong_utils_ZCrypto_release(JNIEnv *, jclass);
+
 #ifdef __cplusplus
 }
 #endif
 #endif
+
 
