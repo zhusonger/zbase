@@ -28,21 +28,7 @@ const size_t noise_word_index = 66;
 const size_t noise_word_size = 6;
 const size_t aes_size = 32;
 
-const char client_key[] = "-----BEGIN RSA PRIVATE KEY-----\n"
-                          "MIICXQIBAAKBgQC5UGguGD4/bWHtKNE0nmj4gPxLjfOhCUPAEU7qNkXHZok4+ZB3\n"
-                          "m51IiS1C3EZANHdX2SWoO5fe7vlGLQ8kpMEfCOpdq/7EJIobTyN+RHu/LBDSJQ1S\n"
-                          "gH8M19fDDqNBlH6Aw6v4c20+pPIRPc11YVC1o47r54GTNMg4OILlQOOKSQIDAQAB\n"
-                          "AoGAQI1GzQ+610NWAlPelDK+JBpiSDtZa3YbuJMO5z0ij3QjRsqATXnSjwrhzlGG\n"
-                          "0ySzkdFdcb3YiFq8UHqvtLcDYiC3XQA3GDZufzxhihAh/yCkCVuyxOUuCzeNY2UT\n"
-                          "spVU46L/ffUk2Xz7uIcD2awAURyyQWPXdV1JqD5tOvawE4ECQQDv8e9ECarpVF5J\n"
-                          "E6yx2VA5me1wz6yZx7bgo6MARrWkNVh2BrxgZy/WifhEHyRWsal2HFdn0/CvBSKV\n"
-                          "JZzbcvD5AkEAxbawGe5A2uAXTrI2RsW+JKIWxtT148/9kly+AjGIxqeiVU2Tq2Bp\n"
-                          "XvBlScnCoLfcya94VvwsjlzgPK95wqYH0QJBAL1zF4hv3atG+v7V8velbqtcNtZo\n"
-                          "ko4E2wb5DL0uF0Lk/8iIvvma33GUFBqtQALXWcawz+5hr9pwwoJiZTv7v/kCQCBj\n"
-                          "fRXCYf15GFhb+Wg+nJeDthd8a4uWVwPTDY1ub+mbLIys2LQKZziWSQF9e9S4SgMA\n"
-                          "K8aUKPhpXpKSbG/mowECQQCiIisFyn+smY5Ni5ULYJyFnosFqvl26FWrKG2PM2Jv\n"
-                          "y3l8uWo7gFA02LT3qoUE2yN7HcCbXsb8n22d3eteQwcL\n"
-                          "-----END RSA PRIVATE KEY-----";
+const char *client_key = NULL;
 // ras key
 char *rsa_key = NULL;
 // aes key
@@ -182,6 +168,9 @@ Java_cn_com_lasong_utils_ZCrypto_encryptRSA(JNIEnv *env, jclass clazz, jstring c
 
 JNIEXPORT jstring JNICALL
 Java_cn_com_lasong_utils_ZCrypto_decryptRSA(JNIEnv *env, jclass clazz, jstring content) {
+    if (!client_key || !content) {
+        return NULL;
+    }
     if (!private_key_rsa) {
         // get crypto private key
         BIO *private_key_bio = BIO_new_mem_buf((void *) client_key, -1);
