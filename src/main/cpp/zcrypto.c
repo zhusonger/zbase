@@ -28,6 +28,7 @@ const size_t noise_word_index = 66;
 const size_t noise_word_size = 6;
 const size_t aes_size = 32;
 
+// change to your private key
 const char *client_key = NULL;
 // ras key
 char *rsa_key = NULL;
