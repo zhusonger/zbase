@@ -24,14 +24,14 @@ public class ZCrypto {
 
     /**
      * 使用服务端公钥RSA加密
-     * @param content 需要解密的内容
+     * @param content 需要加密的内容
      * @return 加密结果
      */
     public static native String encryptRSA(String content);
 
     /**
      * 使用客户端私钥RSA解密
-     * @param content 需要加密的内容
+     * @param content 需要解密的内容
      * @return 解密结果
      */
     public static native String decryptRSA(String content);
