@@ -21,11 +21,20 @@ JNIEXPORT int JNICALL Java_cn_com_lasong_utils_ZCrypto_validateClientKey
 
 /*
  * Class:     cn_com_lasong_utils_ZCrypto
- * Method:    encode
+ * Method:    encryptRSA
  * Signature: (Ljava/lang/String;)Ljava/lang/String;
  */
-JNIEXPORT jstring JNICALL Java_cn_com_lasong_utils_ZCrypto_encode
-        (JNIEnv *, jclass, jstring);
+JNIEXPORT jstring JNICALL Java_cn_com_lasong_utils_ZCrypto_encryptRSA
+        (JNIEnv *env, jclass clazz, jstring content);
+
+
+/*
+ * Class:     cn_com_lasong_utils_ZCrypto
+ * Method:    decryptRSA
+ * Signature: (Ljava/lang/String;)Ljava/lang/String;
+ */
+JNIEXPORT jstring JNICALL
+Java_cn_com_lasong_utils_ZCrypto_decryptRSA(JNIEnv *, jclass, jstring);
 
 /*
  * Class:     cn_com_lasong_utils_ZCrypto

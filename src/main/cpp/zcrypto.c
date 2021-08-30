@@ -28,19 +28,37 @@ const size_t noise_word_index = 66;
 const size_t noise_word_size = 6;
 const size_t aes_size = 32;
 
-// 用来加密的实际公钥
+const char client_key[] = "-----BEGIN RSA PRIVATE KEY-----\n"
+                          "MIICXQIBAAKBgQC5UGguGD4/bWHtKNE0nmj4gPxLjfOhCUPAEU7qNkXHZok4+ZB3\n"
+                          "m51IiS1C3EZANHdX2SWoO5fe7vlGLQ8kpMEfCOpdq/7EJIobTyN+RHu/LBDSJQ1S\n"
+                          "gH8M19fDDqNBlH6Aw6v4c20+pPIRPc11YVC1o47r54GTNMg4OILlQOOKSQIDAQAB\n"
+                          "AoGAQI1GzQ+610NWAlPelDK+JBpiSDtZa3YbuJMO5z0ij3QjRsqATXnSjwrhzlGG\n"
+                          "0ySzkdFdcb3YiFq8UHqvtLcDYiC3XQA3GDZufzxhihAh/yCkCVuyxOUuCzeNY2UT\n"
+                          "spVU46L/ffUk2Xz7uIcD2awAURyyQWPXdV1JqD5tOvawE4ECQQDv8e9ECarpVF5J\n"
+                          "E6yx2VA5me1wz6yZx7bgo6MARrWkNVh2BrxgZy/WifhEHyRWsal2HFdn0/CvBSKV\n"
+                          "JZzbcvD5AkEAxbawGe5A2uAXTrI2RsW+JKIWxtT148/9kly+AjGIxqeiVU2Tq2Bp\n"
+                          "XvBlScnCoLfcya94VvwsjlzgPK95wqYH0QJBAL1zF4hv3atG+v7V8velbqtcNtZo\n"
+                          "ko4E2wb5DL0uF0Lk/8iIvvma33GUFBqtQALXWcawz+5hr9pwwoJiZTv7v/kCQCBj\n"
+                          "fRXCYf15GFhb+Wg+nJeDthd8a4uWVwPTDY1ub+mbLIys2LQKZziWSQF9e9S4SgMA\n"
+                          "K8aUKPhpXpKSbG/mowECQQCiIisFyn+smY5Ni5ULYJyFnosFqvl26FWrKG2PM2Jv\n"
+                          "y3l8uWo7gFA02LT3qoUE2yN7HcCbXsb8n22d3eteQwcL\n"
+                          "-----END RSA PRIVATE KEY-----";
+// ras key
 char *rsa_key = NULL;
-// aes密钥
+// aes key
 char *aes_key = NULL;
-// 签名
+// sign
 char *signature = NULL;
-// rsa加密key
+// rsa key instance
 RSA *public_key_rsa;
-// rsa长度
-int rsa_len;
+RSA *private_key_rsa;
+int public_rsa_len;
+int private_rsa_len;
 
+// release instance
 void _release() {
-    rsa_len = 0;
+    public_rsa_len = 0;
+    private_rsa_len = 0;
     if (rsa_key) {
         free(rsa_key);
         rsa_key = NULL;
@@ -57,8 +75,13 @@ void _release() {
         RSA_free(public_key_rsa);
         public_key_rsa = NULL;
     }
+    if (private_key_rsa) {
+        RSA_free(private_key_rsa);
+        private_key_rsa = NULL;
+    }
 }
 
+// alloc & init
 void *malloc_z(size_t size) {
     void *ptr = malloc(size);
     if (ptr)
@@ -66,7 +89,6 @@ void *malloc_z(size_t size) {
     return ptr;
 }
 
-// 设置加密key
 JNIEXPORT int JNICALL Java_cn_com_lasong_utils_ZCrypto_validateClientKey
         (JNIEnv *env, jclass clz, jstring key, jstring sign) {
 
@@ -106,9 +128,9 @@ JNIEXPORT int JNICALL Java_cn_com_lasong_utils_ZCrypto_validateClientKey
     public_key_rsa = PEM_read_bio_RSA_PUBKEY(public_key_bio, NULL, NULL, NULL);
     BIO_free_all(public_key_bio);
     // get crypto result len
-    rsa_len = RSA_size(public_key_rsa);
+    public_rsa_len = RSA_size(public_key_rsa);
 
-    // sign
+    // sign verify
     char *sign_b64 = malloc_z((len_sign_index - 1) * sizeof(char));
     strncpy(sign_b64, signature, noise_word_index);
     unsigned int real_rs_start_index = noise_word_index + 1;
@@ -133,18 +155,20 @@ JNIEXPORT int JNICALL Java_cn_com_lasong_utils_ZCrypto_validateClientKey
     sign_b64 = NULL;
     free(de_sign);
     de_sign = NULL;
-    LOGE("ret: %d\nAES_KEY:\n%s\n\nRSA_KEY:\n%s\nSIGNATURE\n:%s\n", ret, aes_key, rsa_key, signature);
+//    LOGE("ret: %d\nAES_KEY:\n%s\n\nRSA_KEY:\n%s\nSIGNATURE\n:%s\n", ret, aes_key, rsa_key, signature);
     return ret;
 }
 
-// 加密数据
 JNIEXPORT jstring JNICALL
-Java_cn_com_lasong_utils_ZCrypto_encode(JNIEnv *env, jclass clazz, jstring content) {
-    const char *tmp = (*env)->GetStringUTFChars(env, content, 0);
-    char *p_en = malloc_z(rsa_len * sizeof(unsigned char));
-    int p_len = RSA_public_encrypt(strlen(tmp), (unsigned char *) tmp, (unsigned char *) p_en,
+Java_cn_com_lasong_utils_ZCrypto_encryptRSA(JNIEnv *env, jclass clazz, jstring content) {
+    if (!public_key_rsa) {
+        return NULL;
+    }
+    const char *message = (*env)->GetStringUTFChars(env, content, 0);
+    char *p_en = malloc_z(public_rsa_len * sizeof(unsigned char));
+    int p_len = RSA_public_encrypt(strlen(message), (unsigned char *) message, (unsigned char *) p_en,
                                    public_key_rsa, RSA_PKCS1_PADDING);
-    (*env)->ReleaseStringUTFChars(env, content, tmp);
+    (*env)->ReleaseStringUTFChars(env, content, message);
 
     if (p_len < 0) {
         LOGE("encode error: %d", p_len);
@@ -154,18 +178,91 @@ Java_cn_com_lasong_utils_ZCrypto_encode(JNIEnv *env, jclass clazz, jstring conte
     char *p_en_b64 = malloc_z(len * sizeof(char));
     Base64encode(p_en_b64, p_en, p_len);
     return (*env)->NewStringUTF(env, p_en_b64);
+}
 
-    // 解密实现
-//    char *p_key = "-----BEGIN RSA PRIVATE KEY-----\n"
-//                  XXX
-//                  "-----END RSA PRIVATE KEY-----";
-//    BIO *private_key_bio = BIO_new_mem_buf(p_key, -1);
-//
-//
-//    unsigned char *p_dec = malloc_z(字符长度 * sizeof(unsigned char));
-//    RSA *private_key_rsa = PEM_read_bio_RSAPrivateKey(private_key_bio, NULL, NULL, NULL);
-//    返回解码后的字符长度
-//    int len = RSA_private_decrypt(rsa_len, p_en, p_dec, private_key_rsa, RSA_PKCS1_PADDING);
+JNIEXPORT jstring JNICALL
+Java_cn_com_lasong_utils_ZCrypto_decryptRSA(JNIEnv *env, jclass clazz, jstring content) {
+    if (!private_key_rsa) {
+        // get crypto private key
+        BIO *private_key_bio = BIO_new_mem_buf((void *) client_key, -1);
+        private_key_rsa = PEM_read_bio_RSAPrivateKey(private_key_bio, NULL, NULL, NULL);
+        BIO_free_all(private_key_bio);
+        // get crypto result len
+        private_rsa_len = RSA_size(private_key_rsa);
+    }
+
+    char *encrypt_message = NULL;
+    char *decrypt_result = NULL;
+    char *part_text = NULL;
+    char *part_decrypt_text = NULL;
+
+    if (private_key_rsa) {
+        const char *message_b64 = (*env)->GetStringUTFChars(env, content, JNI_FALSE);
+        encrypt_message = malloc_z(Base64decode_len(message_b64) * sizeof(char));
+        int len_encrypt_message = Base64decode(encrypt_message, message_b64);
+        (*env)->ReleaseStringUTFChars(env, content, message_b64);
+        // encrypt message length > decrypt message length, so use the length of encrypt message is enough
+        decrypt_result = malloc_z(len_encrypt_message * sizeof(char));
+        if (!decrypt_result) {
+            goto error;
+        }
+        memset(decrypt_result, '\0', len_encrypt_message);
+        int len_encrypt = len_encrypt_message;
+        int offset = 0;
+        int decrypt_offset = 0;
+        while (len_encrypt > 0) {
+            int rsa_len = len_encrypt >= private_rsa_len ? private_rsa_len : len_encrypt;
+            part_text = malloc_z(rsa_len * sizeof(char));
+            if (part_text) {
+                memset(part_text, '\0', rsa_len);
+                strncpy(part_text, encrypt_message + offset, rsa_len);
+            }
+            part_decrypt_text = malloc_z(rsa_len * sizeof(char));
+            if (!part_decrypt_text) {
+                goto error;
+            }
+            RSA_private_decrypt(private_rsa_len, (const unsigned char *) encrypt_message + offset,
+                                (unsigned char *) part_decrypt_text,
+                                private_key_rsa, RSA_PKCS1_PADDING);
+            strncpy(decrypt_result + decrypt_offset, part_decrypt_text, rsa_len);
+//            LOGE("part_decrypt_text : %s\n", part_decrypt_text);
+            len_encrypt -= rsa_len;
+            offset += rsa_len;
+            decrypt_offset += strlen(part_decrypt_text);
+            if (part_text) {
+                free(part_text);
+                part_text = NULL;
+            }
+            free(part_decrypt_text);
+            part_decrypt_text = NULL;
+        }
+//        LOGE("decrypt_result : %s\n", decrypt_result);
+        jstring j_decrypt = (*env)->NewStringUTF(env, decrypt_result);
+        free(encrypt_message);
+        encrypt_message = NULL;
+        free(decrypt_result);
+        decrypt_result = NULL;
+        return j_decrypt;
+    }
+    error:
+    if (part_text) {
+        free(part_text);
+        part_text = NULL;
+    }
+    if (part_decrypt_text) {
+        free(part_decrypt_text);
+        part_decrypt_text = NULL;
+    }
+    if (encrypt_message) {
+        free(encrypt_message);
+        encrypt_message = NULL;
+    }
+    if (decrypt_result) {
+        free(decrypt_result);
+        decrypt_result = NULL;
+    }
+    return NULL;
+
 }
 
 JNIEXPORT void JNICALL
