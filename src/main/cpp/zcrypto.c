@@ -24,7 +24,7 @@
 
 #endif //ANDROIDZ_HELPER_H
 
-const size_t noise_word_index = 88;
+const size_t noise_word_index = 66;
 const size_t noise_word_size = 6;
 const size_t aes_size = 32;
 
@@ -77,25 +77,30 @@ JNIEXPORT int JNICALL Java_cn_com_lasong_utils_ZCrypto_validateClientKey
     signature = malloc_z(len_sign_index * sizeof(char));
     const char *sign_index_b64 = (*env)->GetStringUTFChars(env, sign, /*copy*/JNI_FALSE);
     strlcpy(signature, sign_index_b64, len_sign_index);
-    // get aes key
-    aes_key = malloc_z((aes_size + 1) * sizeof(char));
-    strncpy(aes_key, rsa_aes_origin_b64 + aes_size, aes_size);
-    aes_key[aes_size + 1] = '\0';
-    // get noise public key
-    unsigned int len_noise_rsa_b64 = strlen(rsa_aes_origin_b64) - aes_size;
-    char *noise_rsa_b64 = malloc_z(len_noise_rsa_b64 * sizeof(char));
-    strncpy(noise_rsa_b64, rsa_aes_origin_b64, aes_size);
-    strncpy(noise_rsa_b64 + aes_size, rsa_aes_origin_b64 + aes_size * 2,
-            (len_noise_rsa_b64 - aes_size));
-    char *noise_rsa = malloc_z(Base64decode_len(noise_rsa_b64) * sizeof(char));
-    int len_noise_rsa = Base64decode(noise_rsa, noise_rsa_b64);
-    // get real public key
-    rsa_key = malloc_z((len_noise_rsa - noise_word_size) * sizeof(char));
-    strncpy(rsa_key, noise_rsa, noise_word_index);
-    unsigned int real_rlt_start_index = noise_word_index + noise_word_size;
-    strncpy(rsa_key + noise_word_index, noise_rsa + real_rlt_start_index,
-            len_noise_rsa - real_rlt_start_index);
+    char *noise_rsa_aes = malloc_z(Base64decode_len(rsa_aes_origin_b64) * sizeof(char));
+    int len_noise_rsa_aes = Base64decode(noise_rsa_aes, rsa_aes_origin_b64);
 
+    // get aes key
+    int aes_offset = noise_word_size;
+    // aes index
+    size_t aes_index = noise_word_index - aes_offset;
+    aes_key = malloc_z((aes_size + 1) * sizeof(char));
+    strncpy(aes_key, noise_rsa_aes + aes_index, aes_size);
+    aes_key[aes_size] = '\0';
+    // get real public rsa key
+    rsa_key = malloc_z((len_noise_rsa_aes - noise_word_size - aes_size + 1) * sizeof(char));
+    // XXXXX  		 AES_KEY(32)  XXXX(6) 			NOISE(6) XXXXX
+    //          ↑                              ↑
+    //	     AES_INDEX					  NOISE_INDXE
+    // part1
+    strncpy(rsa_key, noise_rsa_aes, aes_index);
+    // part2
+    strncpy(rsa_key + aes_index, noise_rsa_aes + aes_index + aes_size, aes_offset);
+    // part3
+    strncpy(rsa_key + aes_index + aes_offset,
+            noise_rsa_aes + aes_index + aes_size + aes_offset + noise_word_size,
+            len_noise_rsa_aes - noise_word_size - aes_size - aes_index - aes_offset);
+    rsa_key[len_noise_rsa_aes - noise_word_size - aes_size] = '\0';
     // get crypto public key
     BIO *public_key_bio = BIO_new_mem_buf(rsa_key, -1);
     public_key_rsa = PEM_read_bio_RSA_PUBKEY(public_key_bio, NULL, NULL, NULL);
@@ -109,9 +114,10 @@ JNIEXPORT int JNICALL Java_cn_com_lasong_utils_ZCrypto_validateClientKey
     unsigned int real_rs_start_index = noise_word_index + 1;
     strncpy(sign_b64 + noise_word_index, signature + real_rs_start_index,
             (len_sign_index - real_rs_start_index));
-    char *de_sign = malloc_z(Base64decode_len(sign_b64) * sizeof(char));
+    char *de_sign = malloc_z((Base64decode_len(sign_b64) + 1) * sizeof(char));
     int len_de_sign = Base64decode(de_sign, sign_b64);
-    //对数据进行sha256算法摘要
+    de_sign[len_de_sign] = '\0';
+    //sha256 digest
     unsigned char md[SHA256_DIGEST_LENGTH];
     SHA256((unsigned char *) rsa_aes_origin_b64, strlen(rsa_aes_origin_b64), md);
     int ret = RSA_verify(NID_sha256, md, SHA256_DIGEST_LENGTH, (const unsigned char *) de_sign,
@@ -121,14 +127,13 @@ JNIEXPORT int JNICALL Java_cn_com_lasong_utils_ZCrypto_validateClientKey
     }
     (*env)->ReleaseStringUTFChars(env, key, rsa_aes_origin_b64);
     (*env)->ReleaseStringUTFChars(env, sign, sign_index_b64);
-    free(noise_rsa_b64);
-    noise_rsa_b64 = NULL;
-    free(noise_rsa);
-    noise_rsa = NULL;
+    free(noise_rsa_aes);
+    noise_rsa_aes = NULL;
     free(sign_b64);
     sign_b64 = NULL;
     free(de_sign);
     de_sign = NULL;
+    LOGE("ret: %d\nAES_KEY:\n%s\n\nRSA_KEY:\n%s\nSIGNATURE\n:%s\n", ret, aes_key, rsa_key, signature);
     return ret;
 }
 
