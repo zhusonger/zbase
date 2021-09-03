@@ -316,6 +316,17 @@ Java_cn_com_lasong_utils_ZCrypto_decryptRSA(JNIEnv *env, jclass clazz, jstring c
 
 }
 
+JNIEXPORT jstring JNICALL
+Java_cn_com_lasong_utils_ZCrypto_encryptAES(JNIEnv *env, jclass clazz, jstring content) {
+    return NULL;
+}
+
+
+JNIEXPORT jstring JNICALL
+Java_cn_com_lasong_utils_ZCrypto_decryptAES(JNIEnv *env, jclass clazz, jstring content) {
+    return NULL;
+}
+
 JNIEXPORT void JNICALL
 Java_cn_com_lasong_utils_ZCrypto_release(JNIEnv *env, jclass clazz) {
     _release();

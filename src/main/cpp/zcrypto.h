@@ -38,6 +38,22 @@ Java_cn_com_lasong_utils_ZCrypto_decryptRSA(JNIEnv *, jclass, jstring);
 
 /*
  * Class:     cn_com_lasong_utils_ZCrypto
+ * Method:    encryptAES
+ * Signature: (Ljava/lang/String;)Ljava/lang/String;
+ */
+JNIEXPORT jstring JNICALL Java_cn_com_lasong_utils_ZCrypto_encryptAES
+        (JNIEnv *, jclass, jstring);
+
+/*
+ * Class:     cn_com_lasong_utils_ZCrypto
+ * Method:    decryptAES
+ * Signature: (Ljava/lang/String;)Ljava/lang/String;
+ */
+JNIEXPORT jstring JNICALL Java_cn_com_lasong_utils_ZCrypto_decryptAES
+        (JNIEnv *, jclass, jstring);
+
+/*
+ * Class:     cn_com_lasong_utils_ZCrypto
  * Method:    release
  * Signature: ()V
  */

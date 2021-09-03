@@ -37,6 +37,20 @@ public class ZCrypto {
     public static native String decryptRSA(String content);
 
     /**
+     * AES加密
+     * @param content 需要加密的内容
+     * @return 加密结果
+     */
+    public static native String encryptAES(String content);
+
+    /**
+     * AES解密
+     * @param content 需要解密的内容
+     * @return 解密结果
+     */
+    public static native String decryptAES(String content);
+
+    /**
      * 释放加解密相关的对象
      */
     public static native void release();
