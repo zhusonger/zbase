@@ -87,7 +87,7 @@ JNIEXPORT int JNICALL Java_cn_com_lasong_utils_ZCrypto_validateClientKey
     int len_sign_index = (*env)->GetStringUTFLength(env, sign);
     signature = malloc_z(len_sign_index * sizeof(char));
     const char *sign_index_b64 = (*env)->GetStringUTFChars(env, sign, /*copy*/JNI_FALSE);
-    strlcpy(signature, sign_index_b64, len_sign_index);
+    memcpy(signature, sign_index_b64, len_sign_index);
     char *noise_rsa_aes = malloc_z(Base64decode_len(rsa_aes_origin_b64) * sizeof(char));
     int len_noise_rsa_aes = Base64decode(noise_rsa_aes, rsa_aes_origin_b64);
 
@@ -96,18 +96,18 @@ JNIEXPORT int JNICALL Java_cn_com_lasong_utils_ZCrypto_validateClientKey
     // aes index
     size_t aes_index = noise_word_index - aes_offset;
     aes_key = malloc_z(aes_size * sizeof(char));
-    strncpy(aes_key, noise_rsa_aes + aes_index, aes_size);
+    memcpy(aes_key, noise_rsa_aes + aes_index, aes_size);
     // get real public rsa key
     rsa_key = malloc_z((len_noise_rsa_aes - noise_word_size - aes_size) * sizeof(char));
     // XXXXX  		 AES_KEY(32)  XXXX(6) 			NOISE(6) XXXXX
     //          ↑                              ↑
     //	     AES_INDEX					  NOISE_INDXE
     // part1
-    strncpy(rsa_key, noise_rsa_aes, aes_index);
+    memcpy(rsa_key, noise_rsa_aes, aes_index);
     // part2
-    strncpy(rsa_key + aes_index, noise_rsa_aes + aes_index + aes_size, aes_offset);
+    memcpy(rsa_key + aes_index, noise_rsa_aes + aes_index + aes_size, aes_offset);
     // part3
-    strncpy(rsa_key + aes_index + aes_offset,
+    memcpy(rsa_key + aes_index + aes_offset,
             noise_rsa_aes + aes_index + aes_size + aes_offset + noise_word_size,
             len_noise_rsa_aes - noise_word_size - aes_size - aes_index - aes_offset);
     // get crypto public key
@@ -119,10 +119,10 @@ JNIEXPORT int JNICALL Java_cn_com_lasong_utils_ZCrypto_validateClientKey
 
     // sign verify
     char *sign_b64 = malloc_z((len_sign_index - 1) * sizeof(char));
-    strncpy(sign_b64, signature, noise_word_index);
+    memcpy(sign_b64, signature, noise_word_index);
     // 1 is index value
     unsigned int real_rs_start_index = noise_word_index + 1;
-    strncpy(sign_b64 + noise_word_index, signature + real_rs_start_index,
+    memcpy(sign_b64 + noise_word_index, signature + real_rs_start_index,
             (len_sign_index - real_rs_start_index));
     char *de_sign = malloc_z((Base64decode_len(sign_b64)) * sizeof(char));
     int len_de_sign = Base64decode(de_sign, sign_b64);
@@ -178,7 +178,7 @@ Java_cn_com_lasong_utils_ZCrypto_encryptRSA(JNIEnv *env, jclass clazz, jstring c
         if (!part_text) {
             goto end;
         }
-        strncpy(part_text, message + message_offset, message_len);
+        memcpy(part_text, message + message_offset, message_len);
         // encrypt max len is public_rsa_len, so use the length
         part_encrypt_text = malloc_z(public_rsa_len * sizeof(char));
         if (!part_encrypt_text) {
@@ -188,7 +188,10 @@ Java_cn_com_lasong_utils_ZCrypto_encryptRSA(JNIEnv *env, jclass clazz, jstring c
                                                   (unsigned char *) part_text,
                                                   (unsigned char *) part_encrypt_text,
                                                   public_key_rsa, RSA_PKCS1_PADDING);
-        strncpy(encrypt_result + encrypt_offset, part_encrypt_text, len_part_encrypt);
+        if (len_part_encrypt <= 0) {
+            goto end;
+        }
+        memcpy(encrypt_result + encrypt_offset, part_encrypt_text, len_part_encrypt);
 //        LOGE("part_encrypt_text : %s\n, len_part_encrypt : %d,  strlen(part_encrypt_text): %d, result : %d",
 //             part_encrypt_text, len_part_encrypt, strlen(part_encrypt_text), strlen(encrypt_result));
         len_encrypt_message -= message_len;
@@ -266,17 +269,20 @@ Java_cn_com_lasong_utils_ZCrypto_decryptRSA(JNIEnv *env, jclass clazz, jstring c
         if (!part_text) {
             goto end;
         }
-        strncpy(part_text, encrypt_message + encrypt_offset, rsa_len);
+        memcpy(part_text, encrypt_message + encrypt_offset, rsa_len);
 
         part_decrypt_text = malloc_z(rsa_len * sizeof(char));
         if (!part_decrypt_text) {
             goto end;
         }
 
-        RSA_private_decrypt(rsa_len, (const unsigned char *) encrypt_message + encrypt_offset,
+        int len_decrypt = RSA_private_decrypt(rsa_len, (const unsigned char *) encrypt_message + encrypt_offset,
                             (unsigned char *) part_decrypt_text,
                             private_key_rsa, RSA_PKCS1_PADDING);
-        strncpy(decrypt_result + decrypt_offset, part_decrypt_text, rsa_len);
+        if (len_decrypt <= 0) {
+            goto end;
+        }
+        memcpy(decrypt_result + decrypt_offset, part_decrypt_text, rsa_len);
 //            LOGE("part_decrypt_text : %s\n", part_decrypt_text);
         len_encrypt -= rsa_len;
         encrypt_offset += rsa_len;
