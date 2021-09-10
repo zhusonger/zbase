@@ -51,6 +51,13 @@ public class ZCrypto {
     public static native String decryptAES(String content);
 
     /**
+     * 对内容签名
+     * @param content 加密的内容
+     * @return 签名
+     */
+    public static native String signature(String content);
+
+    /**
      * 释放加解密相关的对象
      */
     public static native void release();

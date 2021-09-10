@@ -54,6 +54,14 @@ JNIEXPORT jstring JNICALL Java_cn_com_lasong_utils_ZCrypto_decryptAES
 
 /*
  * Class:     cn_com_lasong_utils_ZCrypto
+ * Method:    signature
+ * Signature: (Ljava/lang/String;)Ljava/lang/String;
+ */
+JNIEXPORT jstring JNICALLJava_cn_com_lasong_utils_ZCrypto_signature
+        (JNIEnv *, jclass, jstring);
+
+/*
+ * Class:     cn_com_lasong_utils_ZCrypto
  * Method:    release
  * Signature: ()V
  */
