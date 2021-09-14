@@ -103,13 +103,16 @@ void *malloc_z(size_t size) {
 JNIEXPORT int JNICALL Java_cn_com_lasong_utils_ZCrypto_validateClientKey
         (JNIEnv *env, jclass clz, jstring key, jstring sign) {
 
+    if (NULL == key || NULL == sign) {
+        return -1;
+    }
     _release();
 
     // temp char
     char *sign_b64 = NULL;
     char *de_sign = NULL;
     char *noise_rsa_aes = NULL;
-    int ret;
+    int ret = 0;
 
     const char *rsa_aes_origin_b64 = (*env)->GetStringUTFChars(env, key, /*copy*/JNI_FALSE);
     int len_sign_index = (*env)->GetStringUTFLength(env, sign);
