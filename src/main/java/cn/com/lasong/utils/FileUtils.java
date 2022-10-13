@@ -1,6 +1,7 @@
 package cn.com.lasong.utils;
 
 import android.content.ContentUris;
+import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
 import android.net.Uri;
@@ -8,6 +9,8 @@ import android.os.Build;
 import android.os.Environment;
 import android.provider.DocumentsContract;
 import android.provider.MediaStore;
+
+import java.io.File;
 
 /**
  * Author: zhusong
@@ -143,5 +146,38 @@ public class FileUtils {
      */
     public static boolean isMediaDocument(Uri uri) {
         return "com.android.providers.media.documents".equals(uri.getAuthority());
+    }
+
+    /**
+     * 转换 content:// uri
+     *
+     * @param path
+     * @return
+     */
+    public static Uri getFileContentUri(final Context context, String path) {
+        try (Cursor cursor = context.getContentResolver().query(
+                MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
+                new String[]{MediaStore.Images.Media._ID},
+                MediaStore.Images.Media.DATA + "=? ",
+                new String[]{path}, null)) {
+
+            if (cursor != null && cursor.moveToFirst()) {
+                int id = cursor.getInt(cursor
+                        .getColumnIndex(MediaStore.MediaColumns._ID));
+                Uri baseUri = Uri.parse("content://media/external/images/media");
+                return Uri.withAppendedPath(baseUri, "" + id);
+            } else {
+                File file = new File(path);
+                if (file.exists()) {
+                    ContentValues values = new ContentValues();
+                    values.put(MediaStore.Images.Media.DATA, path);
+                    return context.getContentResolver().insert(
+                            MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values);
+                } else {
+                    return null;
+                }
+            }
+        }
+        
     }
 }
